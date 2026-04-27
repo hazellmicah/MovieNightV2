@@ -2,67 +2,42 @@ import express from 'express';
 import cors from 'cors';
 import { PORT } from './config.js';
 import { getMovies, getMovie, getFaves } from './ReadUtils.js';
-import { addToFaves } from './CreateUtils.js';
-import { deleteFromFaves, updateFave } from './MyFaves.js';
 
-const app = express()
-app.use(cors())
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`)
-})
+const app = express();
+app.use(cors());
+app.use(express.json());
 
+// --- ROUTES ---
+
+// 1. Main Home Page (The white screen with your links)
 app.get('/', (req, res) => {
-    res.send('<h1><a href="/show">Goodnight Moon, Brad!</a></h1>')
-})
-
-app.get("/calc/rect/:length/:width", (req, res) => {
-    let data = req.params
-    res.status(206).send(`The area of a rectangle ${data.length} x ${data.width} is ${data.length * data.width}`)
-})
-
-app.get("/info/:id", (req, res) => {
-    let movieID = req.params.id
-    if (!movieID || movieID.length != 24) {
-        res.status(400).send({ "error": "Invalid ID" })
-        return
-    }
-    getMovie(res, movieID)
-})
-
-app.get("/faves/show", (req, res) => {
-    getFaves(res)
-})
-
-app.post("/faves/add/:id", (req, res) => {
-    let showID = req.params.id
-    if (!showID || showID.length != 24)
-        res.status(400).send({ error: "Invalid ID" })
-    else
-        addToFaves(res, showID)
-})
-
-app.get("/:type", (req, res) => {
-    let type = req.params.type.toLowerCase()
-    if (type != "movie" && type != "series") {
-        res.status(400).send({ "error": "Invalid URI" })
-        return
-    }
-    getMovies(res, type)
-})
+    res.send(`
+        <h1>Couch Potato Backend is running</h1>
+        <ul>
+            <li><a href="/movie/p1">View Movies (Page 1)</a></li>
+            <li><a href="/series/p1">View Series (Page 1)</a></li>
+            <li><a href="/faves">View Faves</a></li>
+        </ul>
+    `);
+});
 
 app.get("/:type/p:page", (req, res) => {
-    const pageSize = 10
-    let type = req.params.type.toLowerCase()
-    if (type != "movie" && type != "series") {
-        res.status(400).send({ "error": "Invalid URI" })
-        return
-    }
-    let page = parseInt(req.params.page)
-    if (!page || isNaN(page) || page < 1) {
-        res.status(400).send({ "error": "Invalid URI" })
-        return
-    }
-    page = (page - 1) * pageSize
-    getMovies(res, type, page)
-})
+    getMovies(req, res);
+});
 
+app.get("/:type", (req, res) => {
+    getMovies(req, res);
+});
+
+app.get('/faves', (req, res) => {
+    getFaves(req, res);
+});
+
+app.get("/info/:id", (req, res) => {
+    getMovie(req, res);
+});
+
+// --- SERVER START ---
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});

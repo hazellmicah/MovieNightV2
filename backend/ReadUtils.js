@@ -1,8 +1,6 @@
 import { ObjectId } from "mongodb";
 import { moviesCollection, favCollection } from "./myMongo.js";
 
-// Activity: View movies or series by page (HOME PAGE GRID)
-// ONLY TITLE, POSTER, AND YEAR
 const getMovies = (res, type, skip, limit, filters) => {
     let query = { type: type };
 
@@ -30,7 +28,7 @@ const getMovies = (res, type, skip, limit, filters) => {
         .catch(err => res.status(500).json({ error: err.message }));
 };
 
-// Activity: Detailed View of the selected movie (VIEW SHOW PAGE)
+
 const getMovie = (res, movieID) => {
     moviesCollection
         .findOne(
@@ -40,7 +38,7 @@ const getMovie = (res, movieID) => {
                     title: 1, 
                     poster: 1, 
                     year: 1, 
-                    fullplot: 1 // Necessary for the "Detailed View" requirement
+                    fullplot: 1
                 } 
             }
         )
@@ -50,7 +48,6 @@ const getMovie = (res, movieID) => {
         });
 };
 
-// Activity: List the faves (MY FAVES PAGE)
 const getFaves = (res) => {
     favesCollection
         .find({})

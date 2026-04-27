@@ -1,7 +1,6 @@
 import { ObjectId } from "mongodb"
 import { favCollection } from "./myMongo.js"
 
-// Activity: Add a specific movie or series to faves
 const addToFaves = (res, showID) => {
     favCollection
         .countDocuments({ showId: showID })
@@ -10,7 +9,7 @@ const addToFaves = (res, showID) => {
                 res.status(200).json({ message: `Show ID: ${showID} is already in your favorites.` })
                 return
             }
-            // Logic updated to include: showId, empty notes, and watched flag
+
             favCollection
                 .insertOne({ 
                     showId: showID, 
@@ -26,7 +25,6 @@ const addToFaves = (res, showID) => {
         })
 }
 
-// Activity: Delete a specified fave
 const deleteFromFaves = (res, fID) => {
     favCollection
         .deleteOne({ _id: new ObjectId(fID) })
@@ -39,12 +37,9 @@ const deleteFromFaves = (res, fID) => {
         })
 }
 
-// Activity: Update faves by adding a note and flagging as watched/not watched
 const updateFave = (res, fID, theNotes, isWatched) => {
-    // convert fID to ObjectID
     fID = new ObjectId(fID)
 
-    // update the notes field and the watched status.
     const query = { _id: fID }
     const updateData = {
         $set: {
