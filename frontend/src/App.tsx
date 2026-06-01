@@ -1,9 +1,9 @@
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './Components/Navbar';
-import Home from './Pages/Home';
-import ShowDetail from './Pages/ShowDetail';
-import Favorites from './Pages/Favorites';
-import Notfound from './Pages/Notfound';
+import Home from './pages/Home';
+import ShowDetail from './pages/ShowDetail';
+import Favorites from './pages/Favorites';
+import Notfound from './pages/Notfound';
 
 function App() {
   return (

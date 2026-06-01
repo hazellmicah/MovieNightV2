@@ -1,58 +1,151 @@
-import { ObjectId } from "mongodb";
-import { moviesCollection, favCollection } from "./myMongo.js";
+import { ObjectId } from "mongodb"
+import { format } from "date-and-time"
+import { moviesCollection } from "./myMongo.js"
 
-const getMovies = (res, type, skip, limit, filters) => {
-    let query = { type: type };
+const getMovies = (res, type, page = 1) => {
 
-    if (filters.year) {
-        query.year = filters.year;
-    }
-    if (filters.rating) {
-        query["imdb.rating"] = { $gte: filters.rating }; 
-    }
+    const safePage = Math.max(Number(page) || 1, 1)
 
     moviesCollection
-        .find(query)
-        .project({ 
-            title: 1, 
-            poster: 1, 
-            year: 1, 
-            _id: 1 
-        }) 
-        .skip(skip)
-        .limit(limit)
-        .toArray()
-        .then(results => {
-            res.status(200).json(results);
+        .find({ type: type }, {
+            limit: 30,
+            skip: (safePage - 1) * 30,
+            sort: { year: -1 }
         })
-        .catch(err => res.status(500).json({ error: err.message }));
-};
+        .project({
+            _id: 1,
+            plot: 1,
+            title: 1,
+            genres: 1,
+            year: 1,
+            imdb: { rating: 1 },
+            languages: 1,
+            runtime: 1,
+            poster: 1,
+            countries: 1,
+            type: 1,
+            rated: 1
+
+        })
+        .toArray()
+        .then(resp => {
+            if (!resp)
+                resp = { "error": "no data found" }
+            else {
+                for (let doc of resp) {
+                    if (doc.runtime) {
+                        let hours = Math.floor(doc.runtime / 60)
+                        let minutes = doc.runtime % 60
+                        doc.runtime = `${hours == 1 ? "hr" : "hrs"} ${minutes} ${minutes == 1 ? "min" : "mins"}`
+
+                    }
+                }
+            }
+            res.status(200).send(resp)
+        })
+}
 
 
 const getMovie = (res, movieID) => {
     moviesCollection
         .findOne(
             { _id: new ObjectId(movieID) },
-            { 
-                projection: { 
-                    title: 1, 
-                    poster: 1, 
-                    year: 1, 
-                    fullplot: 1
-                } 
+            {
+                projection: {
+                    _id: 1,
+                    plot: 1,
+                    title: 1,
+                    genres: 1,
+                    year: 1,
+                    imdb: { rating: 1 },
+                    languages: 1,
+                    runtime: 1,
+                    poster: 1,
+                    countries: 1,
+                    type: 1,
+                    rated: 1
+                }
             }
         )
-        .then(result => {
-            if (result) res.status(200).json(result);
-            else res.status(404).json({ error: "Show not found" });
-        });
-};
+        .then(doc => {
+            if (!doc) {
+                return res.status(404).json({ error: "no data found" })
+            }
+            if (doc.runtime) {
+                let hours = Math.floor(doc.runtime / 60)
+                let minutes = doc.runtime % 60
+                doc.runtime = `${hours == 1 ? "hr" : "hrs"} ${minutes} ${minutes == 1 ? "min" : "mins"}`
+            }
 
-const getFaves = (res) => {
-    favesCollection
-        .find({})
+            if (doc.released) {
+                doc.released = format(doc.released, "DD, MM, YYYY")
+            }
+
+            res.status(200).json(doc)
+        })
+
+}
+
+const getFavs = (res, showID) => {
+    moviesCollection
+        .find({ showID: { $exists: true } })
         .toArray()
-        .then(results => res.status(200).json(results));
-};
+        .then(favDocs => {
+            if (!favDocs)
+                favDocs = { "error": "no data found" }
+            res.status(200).json(favDocs)
+        })
+}
 
-export { getMovies, getMovie, getFaves };
+const getYears = (res, year) => {
+
+    moviesCollection
+        .find({ year: Number(year) })
+        .project({
+            _id: 1,
+            plot: 1,
+            title: 1,
+            genres: 1,
+            year: 1,
+            countries: 1,
+            type: 1,
+            rated: 1
+        })
+        .toArray()
+        .then(docs => {
+            if (!docs || docs.length === 0) {
+                res.status(404).json({ error: "no data found" })
+                return
+            }
+
+            res.status(200).json(docs)
+        })
+}
+
+const getRating = (res, rating) => {
+
+    moviesCollection
+        .find({ "imdb.rating": { $eq: Number(rating) } })
+        // $gt = greater than, $lt = less than, $gte = greater than or equal to, $lte = less than or equal to
+        .project({
+            _id: 1,
+            plot: 1,
+            title: 1,
+            genres: 1,
+            year: 1,
+            imdb: { rating: 1 }
+        })
+        .toArray()
+        .then(docs => {
+            if (!docs || docs.length === 0) {
+                res.status(404).json({ error: "no data found" })
+                return
+            }
+
+            res.status(200).json(docs)
+        })
+}
+
+
+
+export { getMovies, getMovie, getFavs, getYears, getRating }   
